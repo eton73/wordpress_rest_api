@@ -1,36 +1,29 @@
 package com.simbirsoft.tests;
 
-import com.simbirsoft.helpers.ConfHelpers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.simbirsoft.api.WpPostsApi;
+import com.simbirsoft.config.DataBaseConfig;
+import com.simbirsoft.repository.WpPostsRepository;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class BaseWpTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(BaseWpTest.class);
-    private static final String DATABASE_URL = "jdbc:mysql://localhost:3306/wordpress";
-    private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-
     protected Connection connection;
+    protected WpPostsApi api;
+    protected WpPostsRepository repository;
 
     @BeforeClass
     public void setup(){
-        try {
-            Class.forName(JDBC_DRIVER);
-            connection = DriverManager.getConnection(DATABASE_URL, ConfHelpers.getProperty("user"),
-                    ConfHelpers.getProperty("password"));
-        } catch (ClassNotFoundException | SQLException e) {
-            logger.error(e.getMessage());
-        }
+        connection = DataBaseConfig.connection;
+        api = new WpPostsApi();
+        repository = new WpPostsRepository();
     }
 
     @AfterClass
     public void exit() throws SQLException {
-        connection.close();
+        DataBaseConfig.disconnect();
     }
 }

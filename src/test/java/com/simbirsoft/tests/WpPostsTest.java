@@ -3,211 +3,65 @@ package com.simbirsoft.tests;
 import com.simbirsoft.dto.GetResponse;
 import com.simbirsoft.dto.PostRequest;
 import com.simbirsoft.dto.PostResponse;
-import com.simbirsoft.helpers.ConfHelpers;
-import io.restassured.RestAssured;
-import org.apache.http.HttpStatus;
+import com.simbirsoft.repository.model.WpPostModel;
 import org.assertj.core.api.SoftAssertions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import java.sql.*;
+import java.util.List;
 
 public class WpPostsTest extends BaseWpTest {
 
-    private static final Logger logger = LoggerFactory.getLogger(WpPostsTest.class);
-    private static final String URL_WP_V2_POSTS = "http://localhost:8000/wp-json/wp/v2/posts";
-    private static final String CONTENT_TYPE = "Content-Type";
-    private static final String AUTHORIZATION = "Authorization";
-    private static final String CONTENT_TYPE_APPLICATION_JSON = "application/json";
-
     @Test
-    public void postTest() throws SQLException {
-        PostRequest body = createPostRequest();
+    public void postTest() {
+        PostResponse result = api.postWpPost(createPostRequest());
 
-        PostResponse result = RestAssured.given()
-                .body(body)
-                .header(AUTHORIZATION, "Basic " + ConfHelpers.getProperty("token"))
-                .header(CONTENT_TYPE, CONTENT_TYPE_APPLICATION_JSON)
-                .when()
-                .post(URL_WP_V2_POSTS)
-                .then()
-                .statusCode(HttpStatus.SC_CREATED)
-                .extract()
-                .as(PostResponse.class);
+        WpPostModel modelDb = repository.getPostById(result.getId());
 
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try {
-            statement = connection.createStatement();
+        SoftAssertions softAssertions = new SoftAssertions();
+        softAssertions.assertThat(result.getId()).isEqualTo(modelDb.getId());
+        softAssertions.assertThat(result.getDate()).isEqualTo(modelDb.getPost_date());
+        softAssertions.assertThat(result.getDateGmt()).isEqualTo(modelDb.getPost_date_gmt());
 
-            String sql = String.format("SELECT * FROM wp_posts WHERE id = %s", result.getId());
-
-            resultSet = statement.executeQuery(sql);
-
-            while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String postDate = resultSet.getString("post_date");
-                String postDateGmt = resultSet.getString("post_date_gmt");
-
-                SoftAssertions softAssertions = new SoftAssertions();
-                softAssertions.assertThat(id).isEqualTo(result.getId());
-                softAssertions.assertThat(postDate).isEqualTo(result.getDate());
-                softAssertions.assertThat(postDateGmt).isEqualTo(result.getDateGmt());
-            }
-
-            String deleteData = String.format("DELETE FROM wp_posts WHERE id = %s", result.getId());
-
-            statement.executeQuery(deleteData);
-
-        } catch (SQLException exc) {
-            logger.error(exc.getMessage());
-        } finally {
-            if (resultSet != null) {
-                resultSet.close();
-            }
-            if (statement != null) {
-                statement.close();
-            }
-        }
-
+        repository.deletePostById(result.getId());
     }
     
     @Test
-    public void getTest() throws SQLException {
-        GetResponse[] result = RestAssured.given()
-                .header(AUTHORIZATION, "Basic " + ConfHelpers.getProperty("token"))
-                .when()
-                .get(URL_WP_V2_POSTS)
-                .then()
-                .statusCode(HttpStatus.SC_OK)
-                .extract()
-                .as(GetResponse[].class);
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try {
-            statement = connection.createStatement();
+    public void getTest() {
+        GetResponse[] result = api.getAllWpPosts();
 
-            String sql = "SELECT * FROM wp_posts";
+        List<WpPostModel> modelsDb = repository.getAllPosts();
 
-            resultSet = statement.executeQuery(sql);
-
-            for (GetResponse getResponse : result) {
-                if (resultSet.next()) {
-                    int id = resultSet.getInt("id");
-                    String postDate = resultSet.getString("post_date");
-                    String postDateGmt = resultSet.getString("post_date_gmt");
-
-                    SoftAssertions softAssertions = new SoftAssertions();
-                    softAssertions.assertThat(id).isEqualTo(getResponse.getId());
-                    softAssertions.assertThat(postDate).isEqualTo(getResponse.getDate());
-                    softAssertions.assertThat(postDateGmt).isEqualTo(getResponse.getDateGmt());
-                }
-            }
-        } catch (SQLException exc) {
-            logger.error(exc.getMessage());
-        } finally {
-            if (resultSet != null) {
-                resultSet.close();
-            }
-            if (statement != null) {
-                statement.close();
-            }
+        SoftAssertions softAssertions = new SoftAssertions();
+        softAssertions.assertThat(result.length).isEqualTo(modelsDb.size());
+        for (int i = 0; i < result.length; i++) {
+            softAssertions.assertThat(result[i].getId()).isEqualTo(modelsDb.get(i).getId());
+            softAssertions.assertThat(result[i].getDate()).isEqualTo(modelsDb.get(i).getPost_date());
+            softAssertions.assertThat(result[i].getDateGmt()).isEqualTo(modelsDb.get(i).getPost_date_gmt());
         }
     }
 
     @Test
-    public void getByIDTest() throws SQLException {
-        GetResponse result = RestAssured.given()
-                .header(AUTHORIZATION, "Basic " + ConfHelpers.getProperty("token"))
-                .when()
-                .get(URL_WP_V2_POSTS + "/1")
-                .then()
-                .statusCode(HttpStatus.SC_OK)
-                .extract()
-                .as(GetResponse.class);
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try {
-            statement = connection.createStatement();
+    public void getByIDTest() {
+        GetResponse result = api.getWpPostById(1);
 
-            String sql = String.format("SELECT * FROM wp_posts WHERE id = %s", result.getId());
+        WpPostModel modelDb = repository.getPostById(1);
 
-            resultSet = statement.executeQuery(sql);
-
-            while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String postDate = resultSet.getString("post_date");
-                String postDateGmt = resultSet.getString("post_date_gmt");
-
-                SoftAssertions softAssertions = new SoftAssertions();
-                softAssertions.assertThat(id).isEqualTo(result.getId());
-                softAssertions.assertThat(postDate).isEqualTo(result.getDate());
-                softAssertions.assertThat(postDateGmt).isEqualTo(result.getDateGmt());
-            }
-
-        } catch (SQLException exc) {
-            logger.error(exc.getMessage());
-        } finally {
-            if (resultSet != null) {
-                resultSet.close();
-            }
-            if (statement != null) {
-                statement.close();
-            }
-        }
+        SoftAssertions softAssertions = new SoftAssertions();
+        softAssertions.assertThat(result.getId()).isEqualTo(modelDb.getId());
+        softAssertions.assertThat(result.getDate()).isEqualTo(modelDb.getPost_date());
+        softAssertions.assertThat(result.getDateGmt()).isEqualTo(modelDb.getPost_date_gmt());
     }
 
     @Test
-    public void deletedTest() throws SQLException {
-        PostRequest body = createPostRequest();
+    public void deletedTest() {
+        PostResponse result = api.postWpPost(createPostRequest());
 
-        PostResponse result = RestAssured.given()
-                .body(body)
-                .header(AUTHORIZATION, "Basic " + ConfHelpers.getProperty("token"))
-                .header(CONTENT_TYPE, CONTENT_TYPE_APPLICATION_JSON)
-                .when()
-                .post(URL_WP_V2_POSTS)
-                .then()
-                .statusCode(HttpStatus.SC_CREATED)
-                .extract()
-                .as(PostResponse.class);
+        api.deleteWpPost(result.getId());
 
-        RestAssured.given()
-                .header(AUTHORIZATION, "Basic " + ConfHelpers.getProperty("token"))
-                .when()
-                .get(URL_WP_V2_POSTS + "/" + result.getId())
-                .then()
-                .statusCode(HttpStatus.SC_OK)
-                .extract()
-                .as(GetResponse.class);
+        WpPostModel modelDb = repository.getPostById(result.getId());
 
-        Statement statement = null;
-        ResultSet resultSet = null;
-        try {
-            statement = connection.createStatement();
-
-            String sql = String.format("SELECT * FROM wp_posts WHERE id = %s", result.getId());
-
-            resultSet = statement.executeQuery(sql);
-
-            while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-
-                SoftAssertions softAssertions = new SoftAssertions();
-                softAssertions.assertThat(id).isNull();
-            }
-
-        } catch (SQLException exc) {
-            logger.error(exc.getMessage());
-        } finally {
-            if (resultSet != null) {
-                resultSet.close();
-            }
-            if (statement != null) {
-                statement.close();
-            }
-        }
+        SoftAssertions softAssertions = new SoftAssertions();
+        softAssertions.assertThat(modelDb.getId()).isNull();
     }
     
     private PostRequest createPostRequest() {
