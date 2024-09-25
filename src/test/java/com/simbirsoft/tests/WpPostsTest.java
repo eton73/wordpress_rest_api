@@ -36,9 +36,9 @@ public class WpPostsTest extends BaseWpTest {
 
     @Test
     public void getByIDTest() {
-        PostResponse result = api.getWpPostById(18);
+        PostResponse result = api.getWpPostById(1);
 
-        WpPostModel modelDb = repository.getPostById(18);
+        WpPostModel modelDb = repository.getPostById(1);
 
         assertEquals(new SoftAssertions(), result, modelDb);
     }
