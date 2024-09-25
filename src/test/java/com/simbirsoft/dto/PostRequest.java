@@ -1,14 +1,10 @@
 package com.simbirsoft.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
 @AllArgsConstructor
-@NoArgsConstructor
-@Getter
-@Setter
+@Data
 public class PostRequest {
     private String date;
     private String date_gmt;

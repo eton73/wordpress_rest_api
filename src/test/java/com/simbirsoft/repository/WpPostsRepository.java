@@ -19,16 +19,14 @@ public class WpPostsRepository {
         WpPostModel model = new WpPostModel();
         try(Statement statement = DataBaseConfig.connection.createStatement()) {
             String sql = String.format("SELECT * FROM wp_posts WHERE id = %s", id);
-            ResultSet resultSet = statement.executeQuery(sql);
-
-            if (resultSet.next()) {
-                model.setId(resultSet.getInt(WpPostModel.Fields.id));
-                model.setPost_date(resultSet.getString(WpPostModel.Fields.post_date));
-                model.setPost_date_gmt(resultSet.getString(WpPostModel.Fields.post_date_gmt));
+            try(ResultSet resultSet = statement.executeQuery(sql)) {
+                if (resultSet.next()) {
+                    model.setId(resultSet.getInt(WpPostModel.Fields.id));
+                    model.setPost_date(resultSet.getString(WpPostModel.Fields.post_date));
+                    model.setPost_date_gmt(resultSet.getString(WpPostModel.Fields.post_date_gmt));
+                }
+                return model;
             }
-
-            resultSet.close();
-            return model;
         } catch (SQLException exc) {
             logger.error(exc.getMessage());
             return null;
@@ -39,18 +37,16 @@ public class WpPostsRepository {
         List<WpPostModel> models = new ArrayList<>();
         try(Statement statement = DataBaseConfig.connection.createStatement()) {
             String sql = "SELECT * FROM wp_posts";
-            ResultSet resultSet = statement.executeQuery(sql);
-
-            while (resultSet.next()) {
-                WpPostModel model = new WpPostModel();
-                model.setId(resultSet.getInt(WpPostModel.Fields.id));
-                model.setPost_date(resultSet.getString(WpPostModel.Fields.post_date));
-                model.setPost_date_gmt(resultSet.getString(WpPostModel.Fields.post_date_gmt));
-                models.add(model);
+            try(ResultSet resultSet = statement.executeQuery(sql)) {
+                while (resultSet.next()) {
+                    WpPostModel model = new WpPostModel();
+                    model.setId(resultSet.getInt(WpPostModel.Fields.id));
+                    model.setPost_date(resultSet.getString(WpPostModel.Fields.post_date));
+                    model.setPost_date_gmt(resultSet.getString(WpPostModel.Fields.post_date_gmt));
+                    models.add(model);
+                }
+                return models;
             }
-
-            resultSet.close();
-            return models;
         } catch (SQLException exc) {
             logger.error(exc.getMessage());
             return null;

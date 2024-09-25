@@ -1,6 +1,5 @@
 package com.simbirsoft.tests;
 
-import com.simbirsoft.dto.GetResponse;
 import com.simbirsoft.dto.PostRequest;
 import com.simbirsoft.dto.PostResponse;
 import com.simbirsoft.repository.model.WpPostModel;
@@ -17,39 +16,31 @@ public class WpPostsTest extends BaseWpTest {
 
         WpPostModel modelDb = repository.getPostById(result.getId());
 
-        SoftAssertions softAssertions = new SoftAssertions();
-        softAssertions.assertThat(result.getId()).isEqualTo(modelDb.getId());
-        softAssertions.assertThat(result.getDate()).isEqualTo(modelDb.getPost_date());
-        softAssertions.assertThat(result.getDateGmt()).isEqualTo(modelDb.getPost_date_gmt());
+        assertEquals(new SoftAssertions(), result, modelDb);
 
         repository.deletePostById(result.getId());
     }
     
     @Test
     public void getTest() {
-        GetResponse[] result = api.getAllWpPosts();
+        PostResponse[] result = api.getAllWpPosts();
 
         List<WpPostModel> modelsDb = repository.getAllPosts();
 
         SoftAssertions softAssertions = new SoftAssertions();
         softAssertions.assertThat(result.length).isEqualTo(modelsDb.size());
         for (int i = 0; i < result.length; i++) {
-            softAssertions.assertThat(result[i].getId()).isEqualTo(modelsDb.get(i).getId());
-            softAssertions.assertThat(result[i].getDate()).isEqualTo(modelsDb.get(i).getPost_date());
-            softAssertions.assertThat(result[i].getDateGmt()).isEqualTo(modelsDb.get(i).getPost_date_gmt());
+            assertEquals(softAssertions, result[i], modelsDb.get(i));
         }
     }
 
     @Test
     public void getByIDTest() {
-        GetResponse result = api.getWpPostById(1);
+        PostResponse result = api.getWpPostById(18);
 
-        WpPostModel modelDb = repository.getPostById(1);
+        WpPostModel modelDb = repository.getPostById(18);
 
-        SoftAssertions softAssertions = new SoftAssertions();
-        softAssertions.assertThat(result.getId()).isEqualTo(modelDb.getId());
-        softAssertions.assertThat(result.getDate()).isEqualTo(modelDb.getPost_date());
-        softAssertions.assertThat(result.getDateGmt()).isEqualTo(modelDb.getPost_date_gmt());
+        assertEquals(new SoftAssertions(), result, modelDb);
     }
 
     @Test
@@ -75,4 +66,11 @@ public class WpPostsTest extends BaseWpTest {
                 "open", "open",false,"","standard",
                 new Integer[]{2});
     }
+
+    private void assertEquals(SoftAssertions softAssertions, PostResponse result, WpPostModel modelDb) {
+        softAssertions.assertThat(result.getId()).isEqualTo(modelDb.getId());
+        softAssertions.assertThat(result.getDate()).isEqualTo(modelDb.getPost_date());
+        softAssertions.assertThat(result.getDateGmt()).isEqualTo(modelDb.getPost_date_gmt());
+    }
+
 }
